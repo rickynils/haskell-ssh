@@ -36,7 +36,7 @@ module Network.SSH
     , DisconnectReason (..)
     , DisconnectMessage (..)
       -- ** Name
-    , Name ()
+    , Name (..)
     , UserName
     , ServiceName
     , HasName (..)
