@@ -33,7 +33,7 @@ import           Network.SSH.Transport
 --     service handler functions associated with the connection.
 data ServerConfig state user
     = ServerConfig
-        { socketConfig     :: SocketConfig
+        { socketConfig     :: Either SocketConfig (S.Socket S.Inet6 S.Stream S.Default)
         , transportConfig  :: TransportConfig
         , userAuthConfig   :: UserAuthConfig state user
         , connectionConfig :: ConnectionConfig state user
@@ -60,7 +60,7 @@ data SocketConfig
 
 instance Default (ServerConfig state user) where
     def = ServerConfig
-        { socketConfig     = def
+        { socketConfig     = Left def
         , transportConfig  = def
         , userAuthConfig   = def
         , connectionConfig = def
@@ -125,15 +125,18 @@ instance Default SocketConfig where
 --     | otherwise = pure Nothing
 -- @
 runServer :: (IsAgent agent, HasName user) => ServerConfig state user -> agent -> IO ()
-runServer config agent = do
-    addrs <- nub . fmap S.socketAddress <$> getAddressInfos
+runServer config agent =
     bracket newAsyncSet cancelAsyncSet $ \tas ->
-        -- Open one listening socket and acceptor thread for each address.
-        forConcurrently_ addrs $ bracket open close . accept tas
+        case socketConfig config of
+            Left sc -> do
+                addrs <- nub . fmap S.socketAddress <$> getAddressInfos sc
+                -- Open one listening socket and acceptor thread for each address.
+                forConcurrently_ addrs $ bracket open close . accept sc tas
+            Right s -> acceptLoop tas s
     where
-        getAddressInfos :: IO [S.AddressInfo S.Inet6 S.Stream S.Default]
-        getAddressInfos = concat <$> forM
-            (toList $ socketBindAddresses $ socketConfig config)
+        getAddressInfos :: SocketConfig -> IO [S.AddressInfo S.Inet6 S.Stream S.Default]
+        getAddressInfos sc = concat <$> forM
+            (toList $ socketBindAddresses sc)
             (\(Address (Name h) (Port p)) -> S.getAddressInfo (Just h) (Just $ BS8.pack $ show p) flags)
             -- Return both IPv4 and/or IPv6 addresses, but only when configured on the system.
             -- IPv4 addresses appear as IPv6 (IPv6-mapped), but they are perfectly reachable via IPv4.
@@ -165,11 +168,13 @@ runServer config agent = do
 
         open  = S.socket :: IO (S.Socket S.Inet6 S.Stream S.Default)
         close = S.close
-        accept tas addr s = do
+        accept sc tas addr s = do
             S.setSocketOption s (S.ReuseAddress True)
             S.setSocketOption s (S.V6Only False)
             S.bind s addr
-            S.listen s (socketBacklog $ socketConfig config)
+            S.listen s (socketBacklog sc)
+            acceptLoop tas s
+        acceptLoop tas s = do
             forever $
                 bracketOnError (S.accept s) (S.close . fst) $ \(stream, peerAddr) ->
                 bracketOnError newAsyncToken failAsyncToken $ \tma -> do
