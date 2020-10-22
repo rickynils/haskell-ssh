@@ -5,7 +5,6 @@ import qualified Data.ByteString               as BS
 import qualified Data.ByteString.Short         as SBS
 import qualified Data.Version                  as V
 import           Data.Word
-import           Data.Monoid                    ( (<>) )
 
 import           Network.SSH.Message
 

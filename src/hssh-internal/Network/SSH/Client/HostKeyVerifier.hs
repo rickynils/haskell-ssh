@@ -107,7 +107,7 @@ isWhiteSpace b = b == 0x20 || b == 0x09
 isLineBreak b = b == 0x0a || b == 0x0d
 isPipe b = b == 0x7c
 
-parse :: Monad m => BP.Parser BS.ByteString a -> BS.ByteString -> m a
+parse :: MonadFail m => BP.Parser BS.ByteString a -> BS.ByteString -> m a
 parse p bs = case BP.parse p bs of
     BP.ParseOK _ x -> pure x
     BP.ParseFail e  -> fail e

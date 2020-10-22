@@ -25,13 +25,13 @@ runPut :: B.ByteArrayBuilder -> BS.ByteString
 runPut = B.toByteArray
 {-# INLINEABLE runPut #-}
 
-runGet :: (Monad m, Decoding a) => BS.ByteString -> m a
+runGet :: (MonadFail m, Decoding a) => BS.ByteString -> m a
 runGet bs = case G.runGet get bs of
     Left  e -> fail e
     Right a -> pure a
 {-# INLINEABLE runGet #-}
 
-runGetter :: Monad m => BS.ByteString -> Get a -> m a
+runGetter :: MonadFail m => BS.ByteString -> Get a -> m a
 runGetter bs getter = case G.runGet getter bs of
     Left  e -> fail e
     Right a -> pure a

@@ -31,7 +31,6 @@ import           Control.Monad                  ( when, void, join )
 import           Control.Monad.STM
 import           Data.Default
 import           Data.List
-import           Data.Monoid                    ( (<>) )
 import           Data.Word
 import           GHC.Clock
 import qualified Crypto.Hash                   as Hash

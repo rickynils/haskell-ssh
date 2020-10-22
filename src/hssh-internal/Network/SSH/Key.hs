@@ -13,7 +13,6 @@ module Network.SSH.Key
 
 import           Control.Applicative    (many, (<|>))
 import           Control.Monad          (replicateM, void, when)
-import           Control.Monad.Fail     (MonadFail)
 import qualified Crypto.Cipher.AES      as Cipher
 import qualified Crypto.Cipher.Types    as Cipher
 import           Crypto.Error

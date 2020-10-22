@@ -16,7 +16,6 @@ import           Control.Exception              ( throwIO )
 import           Control.Monad                  ( when )
 import           Data.Bits                      ( unsafeShiftL, (.|.) )
 import           Data.Memory.PtrMethods         ( memCopy, memConstEqual )
-import           Data.Monoid                    ( (<>) )
 import           Data.Word
 import           Foreign.Marshal.Alloc          ( allocaBytes )
 import           Foreign.Ptr
